@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel Shapefile Download</title>
+</head>
+<body>
+    <h1>Shapefile Generation Complete</h1>
+    <p>Here is the metadata for the images found:</p>
+    <ul>
+        {% for image in response['image_metadata'] %}
+        <li>
+            <strong>Image ID:</strong> {{ image['image_id'] }}<br>
+            <strong>Date:</strong> {{ image['date'] }}<br>
+            <strong>Cloud Cover:</strong> {{ image['cloud_cover'] }}%
+        </li>
+        {% endfor %}
+    </ul>
+
+    <h2>Download Shapefile</h2>
+    <a href="{{ response['shapefile_download'] }}">
+        <button>Download Shapefile</button>
+    </a>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel Image Tile Coordinates</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .form-control {
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        .text-center {
+            margin-top: 20px;
+        }
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            padding: 10px 0;
+            background-color: #343a40;
+            color: white;
+        }
+        .spinner-border {
+            width: 2rem;
+            height: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Sentinel Image Tool</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card p-4">
+            <h3 class="text-center">Fetch Sentinel Image Tile Coordinates</h3>
+            <form id="fetch-form" action="/process" method="post">
+                <div class="mb-3 text-center">
+                    <label for="longitude" class="form-label">Longitude</label>
+                    <input type="text" class="form-control" id="longitude" name="longitude" placeholder="Enter Longitude (e.g., 77.2)" required>
+                </div>
+                <div class="mb-3 text-center">
+                    <label for="latitude" class="form-label">Latitude</label>
+                    <input type="text" class="form-control" id="latitude" name="latitude" placeholder="Enter Latitude (e.g., 12.1)" required>
+                </div>
+                <div class="mb-3 text-center">
+                    <label for="start_date" class="form-label">Start Date (YYYY-MM-DD)</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" required>
+                </div>
+                <div class="mb-3 text-center">
+                    <label for="end_date" class="form-label">End Date (YYYY-MM-DD)</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" required>
+                </div>
+                <div class="mb-3 text-center">
+                    <label for="max_cloud_cover" class="form-label">Max Cloud Cover (%)</label>
+                    <input type="number" class="form-control" id="max_cloud_cover" name="max_cloud_cover" min="0" max="100" placeholder="Enter Max Cloud Cover (e.g., 10)" required>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Fetch Data</button>
+                </div>
+                <div class="text-center mt-3" id="fetch-status" style="display: none;">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <span>Fetching data, please wait...</span>
+                </div>
+            </form>
+            <hr>
+            <div id="response-area" style="display: none;">
+                <h4 class="text-center" id="status-message"></h4>
+                <div class="text-center mt-3" id="download-section" style="display: none;">
+                    <button id="download-button" class="btn btn-success">Download Shapefile</button>
+                    <div class="text-center mt-3" id="download-status" style="display: none;">
+                        <div class="spinner-border text-success" role="status"></div>
+                        <span>Downloading file, please wait...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Sentinel Tool | All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.getElementById('fetch-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+
+            // Show fetch status
+            const fetchStatus = document.getElementById('fetch-status');
+            fetchStatus.style.display = 'block';
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                const responseArea = document.getElementById('response-area');
+                const statusMessage = document.getElementById('status-message');
+                const downloadSection = document.getElementById('download-section');
+                const downloadButton = document.getElementById('download-button');
+
+                fetchStatus.style.display = 'none';  // Hide fetch status
+                responseArea.style.display = 'block';
+
+                if (data.status === 'success') {
+                    statusMessage.textContent = `Success! Found tile: ${data.mgrs_tile}`;
+                    downloadSection.style.display = 'block';
+                    downloadButton.onclick = function () {
+                        // Show download status
+                        const downloadStatus = document.getElementById('download-status');
+                        downloadStatus.style.display = 'block';
+
+                        window.location.href = data.shapefile_download;
+
+                        // Hide download status after 5 seconds
+                        setTimeout(() => {
+                            downloadStatus.style.display = 'none';
+                        }, 5000);
+                    };
+                } else {
+                    statusMessage.textContent = `Error: ${data.message}`;
+                    downloadSection.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const responseArea = document.getElementById('response-area');
+                const statusMessage = document.getElementById('status-message');
+                fetchStatus.style.display = 'none';  // Hide fetch status
+                responseArea.style.display = 'block';
+                statusMessage.textContent = 'An unexpected error occurred.';
+            });
+        });
+    </script>
+</body>
+</html>
